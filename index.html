@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive BNN Medical Diagnosis Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        .card {
+            background-color: #1a202c; /* A darker gray for cards */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4fd1c5; /* Teal color */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #1a202c;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4fd1c5;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #1a202c;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-white">Interactive BNN Medical Diagnosis Simulation</h1>
+            <p class="text-lg text-gray-400 mt-2">A Web-Based Tool Demonstrating Uncertainty in AI-Powered Diagnostics</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Column: Inputs and Explanations -->
+            <div class="flex flex-col gap-8">
+                <div class="card">
+                    <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-700 pb-2">Patient Data Input</h2>
+                    <div class="space-y-6">
+                        <!-- Genetic Marker Score Slider -->
+                        <div>
+                            <label for="geneticMarker" class="flex justify-between font-medium text-gray-300">
+                                <span>Genetic Marker Score</span>
+                                <span id="geneticMarkerValue" class="font-bold text-teal-400">5.5</span>
+                            </label>
+                            <input id="geneticMarker" type="range" min="0" max="12" value="5.5" step="0.1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <!-- Brain Atrophy Measurement Slider -->
+                        <div>
+                            <label for="brainAtrophy" class="flex justify-between font-medium text-gray-300">
+                                <span>Brain Atrophy Measurement</span>
+                                <span id="brainAtrophyValue" class="font-bold text-teal-400">6.0</span>
+                            </label>
+                            <input id="brainAtrophy" type="range" min="0" max="15" value="6.0" step="0.1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <!-- Cognitive Test Score Slider -->
+                        <div>
+                            <label for="cognitiveScore" class="flex justify-between font-medium text-gray-300">
+                                <span>Cognitive Test Score</span>
+                                <span id="cognitiveScoreValue" class="font-bold text-teal-400">75</span>
+                            </label>
+                            <input id="cognitiveScore" type="range" min="40" max="100" value="75" step="1" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                     <details class="text-gray-300">
+                        <summary class="text-xl font-semibold text-white cursor-pointer">What do these scores mean?</summary>
+                        <div class="mt-4 space-y-4 text-gray-400 border-t border-gray-700 pt-4">
+                            <p><strong>Genetic Marker Score:</strong> Simulates a person's genetic risk. A higher score represents a greater inherited predisposition for a disease like Alzheimer's, often linked to genes like APOE4.</p>
+                            <p><strong>Brain Atrophy Measurement:</strong> Represents the amount of brain tissue shrinkage, a key indicator of neurodegeneration. This is measured from MRI scans. A higher score means more atrophy.</p>
+                            <p><strong>Cognitive Test Score:</strong> A measure of mental function from tests assessing memory, problem-solving, and attention. A lower score indicates cognitive impairment.</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Right Column: Outputs and Visualizations -->
+            <div class="flex flex-col gap-8">
+                <div class="card">
+                    <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-700 pb-2">Diagnostic Report</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p class="text-sm text-gray-400">Probability of Alzheimer's</p>
+                            <p id="probabilityOutput" class="text-3xl font-bold text-teal-400">-</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">95% Credible Interval</p>
+                            <p id="intervalOutput" class="text-xl font-semibold text-white">-</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Model Confidence</p>
+                            <p id="assessmentOutput" class="text-xl font-bold text-white">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-white mb-2 text-center">Diagnosis & Uncertainty Visualization</h3>
+                    <canvas id="diagnosisChart"></canvas>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-xl font-semibold text-white mb-2 text-center">Patient Data Distribution</h3>
+                    <canvas id="scatterPlot"></canvas>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center text-gray-500 mt-8">
+            <p>This is a conceptual simulation based on the principles of Bayesian Neural Networks and matrix-variate priors. It is for educational purposes only.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Static Data and Configuration ---
+        const meanHealthy = [2, 3, 90];
+        const covHealthy = [[0.5, 0.4, -5], [0.4, 0.6, -8], [-5, -8, 200]];
+        const meanAlzheimers = [8, 9, 60];
+        const covAlzheimers = [[0.8, 0.7, -6], [0.7, 1.0, -9], [-6, -9, 250]];
+
+        // Pre-calculated inverses and determinants to avoid complex matrix math in JS
+        const invCovHealthy = [
+            [3.92857143, -2.14285714, 0.04285714],
+            [-2.14285714, 2.5, -0.05],
+            [0.04285714, -0.05, 0.001]
+        ];
+        const detCovHealthy = 28.0;
+
+        const invCovAlzheimers = [
+            [2.45454545, -1.90909091, 0.04909091],
+            [-1.90909091, 3.27272727, -0.05454545],
+            [0.04909091, -0.05454545, 0.00181818]
+        ];
+        const detCovAlzheimers = 55.0;
+
+        // --- DOM Element References ---
+        const geneticMarkerSlider = document.getElementById('geneticMarker');
+        const brainAtrophySlider = document.getElementById('brainAtrophy');
+        const cognitiveScoreSlider = document.getElementById('cognitiveScore');
+
+        const geneticMarkerValue = document.getElementById('geneticMarkerValue');
+        const brainAtrophyValue = document.getElementById('brainAtrophyValue');
+        const cognitiveScoreValue = document.getElementById('cognitiveScoreValue');
+        
+        const probabilityOutput = document.getElementById('probabilityOutput');
+        const intervalOutput = document.getElementById('intervalOutput');
+        const assessmentOutput = document.getElementById('assessmentOutput');
+
+        // --- Core Simulation Logic ---
+        function multivariateNormalPdf(x, mean, invCov, detCov) {
+            const k = x.length;
+            const diff = x.map((val, i) => val - mean[i]);
+            
+            // (x-mu)^T * Sigma^-1 * (x-mu)
+            let expTerm = 0;
+            for (let i = 0; i < k; i++) {
+                for (let j = 0; j < k; j++) {
+                    expTerm += diff[i] * invCov[i][j] * diff[j];
+                }
+            }
+            
+            const constant = 1 / Math.sqrt(Math.pow(2 * Math.PI, k) * detCov);
+            return constant * Math.exp(-0.5 * expTerm);
+        }
+
+        function simulateBnnDiagnosis(patientData) {
+            const probHealthy = multivariateNormalPdf(patientData, meanHealthy, invCovHealthy, detCovHealthy);
+            const probAlzheimers = multivariateNormalPdf(patientData, meanAlzheimers, invCovAlzheimers, detCovAlzheimers);
+
+            const predProbAlz = probAlzheimers / (probHealthy + probAlzheimers);
+            
+            // Simulate Uncertainty Quantification using Mahalanobis distance
+            function mahalanobis(x, mean, invCov) {
+                 const diff = x.map((val, i) => val - mean[i]);
+                 let dist = 0;
+                 for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        dist += diff[i] * invCov[i][j] * diff[j];
+                    }
+                 }
+                 return Math.sqrt(dist);
+            }
+
+            const distHealthy = mahalanobis(patientData, meanHealthy, invCovHealthy);
+            const distAlz = mahalanobis(patientData, meanAlzheimers, invCovAlzheimers);
+            
+            const min_dist = Math.min(distHealthy, distAlz);
+            const uncertainty_margin = 0.05 + (min_dist / 15);
+
+            const lower_bound = Math.max(0, predProbAlz - uncertainty_margin);
+            const upper_bound = Math.min(1, predProbAlz + uncertainty_margin);
+            
+            return {
+                probability: predProbAlz,
+                interval: [lower_bound, upper_bound]
+            };
+        }
+
+        // --- Charting and Visualization ---
+        const diagnosisCtx = document.getElementById('diagnosisChart').getContext('2d');
+        const scatterCtx = document.getElementById('scatterPlot').getContext('2d');
+        
+        // Generate some background data points for the scatter plot
+        // This is a simplified way to create a visual distribution
+        function generateScatterData(mean, cov, count) {
+            let data = [];
+            for (let i=0; i<count; i++) {
+                // A simplified random generation for visualization purposes
+                data.push({
+                    x: (Math.random() - 0.5) * Math.sqrt(cov[0][0]) * 5 + mean[0],
+                    y: (Math.random() - 0.5) * Math.sqrt(cov[1][1]) * 5 + mean[1]
+                });
+            }
+            return data;
+        }
+
+        const scatterPlot = new Chart(scatterCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Healthy Patients',
+                        data: generateScatterData(meanHealthy, covHealthy, 100),
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)'
+                    },
+                    {
+                        label: "Alzheimer's Patients",
+                        data: generateScatterData(meanAlzheimers, covAlzheimers, 100),
+                        backgroundColor: 'rgba(239, 68, 68, 0.5)'
+                    },
+                     {
+                        label: 'Your Patient',
+                        data: [],
+                        backgroundColor: 'rgb(79, 209, 197)',
+                        pointStyle: 'star',
+                        radius: 12,
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#d1d5db' } }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Genetic Marker Score', color: '#9ca3af' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#d1d5db' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Brain Atrophy Measurement', color: '#9ca3af' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#d1d5db' }
+                    }
+                }
+            }
+        });
+
+        const diagnosisChart = new Chart(diagnosisCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Your Patient'],
+                datasets: [{
+                    label: 'Credible Interval',
+                    data: [], // e.g., [[0.75, 0.95]] for a bar from 75% to 95%
+                    backgroundColor: 'rgba(79, 209, 197, 0.4)',
+                    borderColor: 'rgba(79, 209, 197, 1)',
+                    borderWidth: 2,
+                    borderSkipped: false
+                }, {
+                    label: 'Predicted Probability',
+                    data: [], // e.g., [0.85]
+                    backgroundColor: 'rgba(79, 209, 197, 1)',
+                    barPercentage: 0.1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.datasetIndex === 0) {
+                                    const interval = context.raw;
+                                    return `Credible Interval: [${(interval[0]*100).toFixed(1)}%, ${(interval[1]*100).toFixed(1)}%]`;
+                                }
+                                return `Prediction: ${(context.raw * 100).toFixed(1)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        min: 0,
+                        max: 1,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { 
+                            color: '#d1d5db',
+                            callback: value => (value * 100) + '%'
+                        }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#d1d5db', font: {size: 14} }
+                    }
+                }
+            }
+        });
+        
+        // --- Main Update Function & Event Listeners ---
+        function updateDashboard() {
+            const geneticMarker = parseFloat(geneticMarkerSlider.value);
+            const brainAtrophy = parseFloat(brainAtrophySlider.value);
+            const cognitiveScore = parseFloat(cognitiveScoreSlider.value);
+            
+            geneticMarkerValue.textContent = geneticMarker.toFixed(1);
+            brainAtrophyValue.textContent = brainAtrophy.toFixed(1);
+            cognitiveScoreValue.textContent = cognitiveScore.toFixed(0);
+
+            const patientData = [geneticMarker, brainAtrophy, cognitiveScore];
+            const result = simulateBnnDiagnosis(patientData);
+            
+            // Update text outputs
+            probabilityOutput.textContent = (result.probability * 100).toFixed(1) + '%';
+            intervalOutput.textContent = `[${(result.interval[0] * 100).toFixed(1)}% - ${(result.interval[1] * 100).toFixed(1)}%]`;
+            
+            const confidenceRange = result.interval[1] - result.interval[0];
+            let assessmentText = 'High';
+            let assessmentColor = 'text-green-400';
+            if (confidenceRange > 0.3) {
+                assessmentText = 'Low';
+                assessmentColor = 'text-red-400';
+            } else if (confidenceRange > 0.15) {
+                assessmentText = 'Medium';
+                assessmentColor = 'text-yellow-400';
+            }
+            assessmentOutput.textContent = assessmentText;
+            assessmentOutput.className = `text-xl font-bold ${assessmentColor}`;
+            
+            // Update charts
+            diagnosisChart.data.datasets[0].data = [result.interval];
+            diagnosisChart.data.datasets[1].data = [result.probability];
+            diagnosisChart.update();
+
+            scatterPlot.data.datasets[2].data = [{x: geneticMarker, y: brainAtrophy}];
+            scatterPlot.update();
+        }
+
+        // Add event listeners
+        [geneticMarkerSlider, brainAtrophySlider, cognitiveScoreSlider].forEach(slider => {
+            slider.addEventListener('input', updateDashboard);
+        });
+
+        // Initial call to populate dashboard
+        window.onload = function() {
+            updateDashboard();
+        };
+
+    </script>
+</body>
+</html>
+
